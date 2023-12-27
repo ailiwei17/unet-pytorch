@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #   num_classes     训练自己的数据集必须要修改的
     #                   自己需要的分类个数+1，如2+1
     #-----------------------------------------------------#
-    num_classes = 2
+    num_classes = 4
     #-----------------------------------------------------#
     #   主干网络选择
     #   vgg
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     #------------------------------------------------------------------#
     Init_Epoch          = 0
-    Freeze_Epoch        = 50
+    Freeze_Epoch        = 0
     Freeze_batch_size   = 2
     #------------------------------------------------------------------#
     #   解冻阶段训练参数
@@ -158,8 +158,8 @@ if __name__ == "__main__":
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     #------------------------------------------------------------------#
-    UnFreeze_Epoch      = 100
-    Unfreeze_batch_size = 2
+    UnFreeze_Epoch      = 300
+    Unfreeze_batch_size = 4
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -269,8 +269,8 @@ if __name__ == "__main__":
         else:
             download_weights(backbone)
 
-    # model = Unet(num_classes=num_classes, pretrained=pretrained, backbone=backbone).train()
-    model = EGEUNet(num_classes=num_classes).train()
+    model = Unet(num_classes=num_classes, pretrained=pretrained, backbone=backbone).train()
+    # model = EGEUNet(num_classes=num_classes).train()
     if not pretrained:
         weights_init(model)
     if model_path != '':
