@@ -10,7 +10,7 @@ from nets.unet import Unet
 if __name__ == "__main__":
     input_shape     = [512, 512]
     num_classes     = 21
-    backbone        = 'vgg'
+    backbone        = 'mobilenet'
     
     device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Unet(num_classes = num_classes, backbone = backbone).to(device)

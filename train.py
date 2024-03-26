@@ -9,7 +9,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from nets.unet import Unet
-from nets.egeunet import EGEUNet
 from nets.unet_training import get_lr_scheduler, set_optimizer_lr, weights_init
 from utils.callbacks import LossHistory, EvalCallback
 from utils.dataloader import UnetDataset, unet_dataset_collate
@@ -73,14 +72,14 @@ if __name__ == "__main__":
     #   vgg
     #   resnet50
     #-----------------------------------------------------#
-    backbone    = "vgg"
+    backbone    = "resnet50"
     #----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
     #                   如果不设置model_path，pretrained = True，此时仅加载主干开始训练。
     #                   如果不设置model_path，pretrained = False，Freeze_Train = Fasle，此时从0开始训练，且没有冻结主干的过程。
     #----------------------------------------------------------------------------------------------------------------------------#
-    pretrained  = False
+    pretrained  = True
     #----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
     #   模型的 预训练权重 比较重要的部分是 主干特征提取网络的权值部分，用于进行特征提取。
@@ -99,8 +98,8 @@ if __name__ == "__main__":
     #   一般来讲，网络从0开始的训练效果会很差，因为权值太过随机，特征提取效果不明显，因此非常、非常、非常不建议大家从0开始训练！
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    # model_path  = "model_data/unet_vgg_voc.pth"
-    model_path  = ""
+    model_path  = "model_data/resnet50-19c8e357.pth"
+    # model_path  = ""
     #-----------------------------------------------------#
     #   input_shape     输入图片的大小，32的倍数
     #-----------------------------------------------------#
@@ -270,7 +269,6 @@ if __name__ == "__main__":
             download_weights(backbone)
 
     model = Unet(num_classes=num_classes, pretrained=pretrained, backbone=backbone).train()
-    # model = EGEUNet(num_classes=num_classes).train()
     if not pretrained:
         weights_init(model)
     if model_path != '':

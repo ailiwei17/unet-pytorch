@@ -26,7 +26,7 @@ class Unet(object):
         #   训练好后logs文件夹下存在多个权值文件，选择验证集损失较低的即可。
         #   验证集损失较低不代表miou较高，仅代表该权值在验证集上泛化性能较好。
         #-------------------------------------------------------------------#
-        "model_path"    : 'model_data/unet_vgg_voc.pth',
+        "model_path"    : 'model_data/vgg.pth',
         #--------------------------------#
         #   所需要区分的类的个数+1
         #--------------------------------#
@@ -46,7 +46,7 @@ class Unet(object):
         #   mix_type = 1的时候代表仅保留生成的图
         #   mix_type = 2的时候代表仅扣去背景，仅保留原图中的目标
         #-------------------------------------------------#
-        "mix_type"      : 0,
+        "mix_type"      : 3,
         #--------------------------------#
         #   是否使用Cuda
         #   没有GPU可以设置成False
@@ -199,8 +199,15 @@ class Unet(object):
             #   将新图片转换成Image的形式
             #------------------------------------------------#
             image = Image.fromarray(np.uint8(seg_img))
-        
+
+        elif self.mix_type == 3:
+            seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
+            seg_img = np.where(seg_img == [0, 0, 0], old_img, seg_img)
+            image = Image.fromarray(np.uint8(seg_img))
+
         return image
+
+
 
     def get_FPS(self, image, test_interval):
         #---------------------------------------------------------#
@@ -356,7 +363,7 @@ class Unet_ONNX(object):
         #--------------------------------#
         #   所使用的的主干网络：vgg、resnet50   
         #--------------------------------#
-        "backbone"      : "vgg",
+        "backbone"      : "resnet50",
         #--------------------------------#
         #   输入图片的大小
         #--------------------------------#

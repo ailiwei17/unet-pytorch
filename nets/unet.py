@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from nets.resnet import resnet50
 from nets.vgg import VGG16
+from nets.mobilenet_v3 import mobilenet_v3
 
 
 class unetUp(nn.Module):
@@ -31,6 +32,9 @@ class Unet(nn.Module):
         elif backbone == "resnet50":
             self.resnet = resnet50(pretrained=pretrained)
             in_filters = [192, 512, 1024, 3072]
+        elif backbone == "mobilenet":
+            self.mobilenet = mobilenet_v3(pretrained=pretrained)
+            in_filters = [144, 280, 552, 272]
         else:
             raise ValueError('Unsupported backbone - `{}`, Use vgg, resnet50.'.format(backbone))
         out_filters = [64, 128, 256, 512]
@@ -65,7 +69,8 @@ class Unet(nn.Module):
             [feat1, feat2, feat3, feat4, feat5] = self.vgg.forward(inputs)
         elif self.backbone == "resnet50":
             [feat1, feat2, feat3, feat4, feat5] = self.resnet.forward(inputs)
-
+        elif self.backbone == "mobilenet":
+            [feat1, feat2, feat3, feat4, feat5] = self.mobilenet.forward(inputs)
         up4 = self.up_concat4(feat4, feat5)
         up3 = self.up_concat3(feat3, up4)
         up2 = self.up_concat2(feat2, up3)
@@ -85,6 +90,9 @@ class Unet(nn.Module):
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
                 param.requires_grad = False
+        elif self.backbone == "mobilenet":
+            for param in self.mobilenet.parameters():
+                param.requires_grad = False
 
     def unfreeze_backbone(self):
         if self.backbone == "vgg":
@@ -92,4 +100,7 @@ class Unet(nn.Module):
                 param.requires_grad = True
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
+                param.requires_grad = True
+        elif self.backbone == "mobilenet":
+            for param in self.mobilenet.parameters():
                 param.requires_grad = True
