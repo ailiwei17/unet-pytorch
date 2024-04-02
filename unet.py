@@ -202,7 +202,9 @@ class Unet(object):
 
         elif self.mix_type == 3:
             seg_img = np.reshape(np.array(self.colors, np.uint8)[np.reshape(pr, [-1])], [orininal_h, orininal_w, -1])
-            seg_img = np.where(seg_img == [0, 0, 0], old_img, seg_img)
+            mask = (seg_img == [0, 0, 0]).all(axis=-1)  # 创建一个布尔掩码，表示 RGB 颜色为 [0, 0, 0] 的部分
+            old_img_array = np.asarray(old_img)
+            seg_img[mask] = old_img_array[mask]  # 根据掩码将对应位置的值替换为 old_img 中的值
             image = Image.fromarray(np.uint8(seg_img))
 
         return image

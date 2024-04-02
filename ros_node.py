@@ -52,7 +52,7 @@ class ImageProcessorNode:
 
 
 if __name__ == '__main__':
-    name_classes = ["background", "crack","spallation","exposedbars"]
+    name_classes = ["background", "crack", "spallation", "exposedbars"]
     count = False
 
     detect_param = {
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         'count': False,
     }
 
-    subscriber_topic = '/camera/image_color/compressed'
+    subscriber_topic = '/camera/color/image_raw/compressed'
     publisher_topic = '/camera/detect_image_color'
 
     unet = Unet()
