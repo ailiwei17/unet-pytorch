@@ -95,19 +95,19 @@ class Unet(nn.Module):
         elif self.backbone == "resnet50":
             [feat1, feat2, feat3, feat4, feat5] = self.resnet.forward(inputs)
         if self.update:
-            print(f"feat1:{feat1.shape}")
-            print(f"feat2:{feat2.shape}")
-            print(f"feat3:{feat3.shape}")
-            print(f"feat4:{feat4.shape}")
+            # print(f"feat1:{feat1.shape}")
+            # print(f"feat2:{feat2.shape}")
+            # print(f"feat3:{feat3.shape}")
+            # print(f"feat4:{feat4.shape}")
 
             new_feat1 = self.v_up_1(feat1, feat2)
             new_feat2 = self.v_up_2(feat2, feat3)
             new_feat3 = self.v_up_3(feat3, feat4)
 
-            print(f"new_feat1:{feat1.shape}")
-            print(f"new_feat2:{feat2.shape}")
-            print(f"new_feat3:{feat3.shape}")
-            print(f"new_feat4:{feat4.shape}")
+            # print(f"new_feat1:{feat1.shape}")
+            # print(f"new_feat2:{feat2.shape}")
+            # print(f"new_feat3:{feat3.shape}")
+            # print(f"new_feat4:{feat4.shape}")
 
             feat1 = feat1 + new_feat1
             feat2 = feat2 + new_feat2
