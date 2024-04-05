@@ -3,7 +3,6 @@ import torch.nn as nn
 
 from nets.resnet import resnet50
 from nets.vgg import VGG16
-from nets.mobilenet_v3 import mobilenet_v3
 from nets.module import SpatialGroupEnhance
 
 class unetUp(nn.Module):
@@ -23,18 +22,34 @@ class unetUp(nn.Module):
         return outputs
 
 
+class unet_v_up(nn.Module):
+    def __init__(self, in_size,out_size):
+        super(unet_v_up, self).__init__()
+        self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
+        self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, inputs1, inputs2):
+        outputs = torch.cat([inputs1, self.up(inputs2)], 1)
+        outputs = self.conv1(outputs)
+        outputs = self.relu(outputs)
+        outputs = self.conv2(outputs)
+        outputs = self.relu(outputs)
+        return outputs
+
+
 class Unet(nn.Module):
     def __init__(self, num_classes=21, pretrained=False, backbone='vgg', update=False):
         super(Unet, self).__init__()
+        self.update = update
         if backbone == 'vgg':
             self.vgg = VGG16(pretrained=pretrained, update=update)
             in_filters = [192, 384, 768, 1024]
         elif backbone == "resnet50":
             self.resnet = resnet50(pretrained=pretrained,update=update)
             in_filters = [192, 512, 1024, 3072]
-        elif backbone == "mobilenet":
-            self.mobilenet = mobilenet_v3(pretrained=pretrained)
-            in_filters = [144, 280, 552, 272]
+
         else:
             raise ValueError('Unsupported backbone - `{}`, Use vgg, resnet50.'.format(backbone))
         out_filters = [64, 128, 256, 512]
@@ -51,6 +66,13 @@ class Unet(nn.Module):
 
         # 512,512,64
         self.up_concat1 = unetUp(in_filters[0], out_filters[0])
+
+        if self.update:
+            self.v_up_1 = unet_v_up(in_filters[0], out_filters[0])
+            self.v_up_2 = unet_v_up(in_filters[1], out_filters[1])
+            self.v_up_3 = unet_v_up(in_filters[2], out_filters[2])
+
+
 
         if backbone == 'resnet50':
             self.up_conv = nn.Sequential(
@@ -72,8 +94,25 @@ class Unet(nn.Module):
             [feat1, feat2, feat3, feat4, feat5] = self.vgg.forward(inputs)
         elif self.backbone == "resnet50":
             [feat1, feat2, feat3, feat4, feat5] = self.resnet.forward(inputs)
-        elif self.backbone == "mobilenet":
-            [feat1, feat2, feat3, feat4, feat5] = self.mobilenet.forward(inputs)
+        if self.update:
+            print(f"feat1:{feat1.shape}")
+            print(f"feat2:{feat2.shape}")
+            print(f"feat3:{feat3.shape}")
+            print(f"feat4:{feat4.shape}")
+
+            new_feat1 = self.v_up_1(feat1, feat2)
+            new_feat2 = self.v_up_2(feat2, feat3)
+            new_feat3 = self.v_up_3(feat3, feat4)
+
+            print(f"new_feat1:{feat1.shape}")
+            print(f"new_feat2:{feat2.shape}")
+            print(f"new_feat3:{feat3.shape}")
+            print(f"new_feat4:{feat4.shape}")
+
+            feat1 = feat1 + new_feat1
+            feat2 = feat2 + new_feat2
+            feat3 = feat3 + new_feat3
+
         up4 = self.up_concat4(feat4, feat5)
         up3 = self.up_concat3(feat3, up4)
         up2 = self.up_concat2(feat2, up3)
@@ -93,9 +132,6 @@ class Unet(nn.Module):
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
                 param.requires_grad = False
-        elif self.backbone == "mobilenet":
-            for param in self.mobilenet.parameters():
-                param.requires_grad = False
 
     def unfreeze_backbone(self):
         if self.backbone == "vgg":
@@ -103,7 +139,4 @@ class Unet(nn.Module):
                 param.requires_grad = True
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
-                param.requires_grad = True
-        elif self.backbone == "mobilenet":
-            for param in self.mobilenet.parameters():
                 param.requires_grad = True

@@ -121,13 +121,7 @@ class ResNet(nn.Module):
         # 38,38,1024 -> 19,19,2048
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        self.update = update
-        if update:
-            self.sge_1 = SpatialGroupEnhance(64)
-            self.sge_2 = SpatialGroupEnhance(256)
-            self.sge_3 = SpatialGroupEnhance(512)
-            self.sge_4 = SpatialGroupEnhance(1024)
-            self.sge_5 = SpatialGroupEnhance(2048)
+
         
         self.avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -161,21 +155,15 @@ class ResNet(nn.Module):
         x       = self.conv1(x)
         x       = self.bn1(x)
         feat1   = self.relu(x)
-        if self.update:
-            feat1 = self.sge_1(feat1)
         x       = self.maxpool(feat1)
         feat2   = self.layer1(x)
-        if self.update:
-            feat2 = self.sge_2(feat2)
+
         feat3   = self.layer2(feat2)
-        if self.update:
-            feat3 = self.sge_3(feat3)
+
         feat4   = self.layer3(feat3)
-        if self.update:
-            feat4 = self.sge_4(feat4)
+
         feat5   = self.layer4(feat4)
-        if self.update:
-            feat5 = self.sge_5(feat5)
+
         return [feat1, feat2, feat3, feat4, feat5]
 
 def resnet50(pretrained=False, **kwargs):
