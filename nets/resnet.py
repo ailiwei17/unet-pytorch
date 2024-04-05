@@ -127,7 +127,6 @@ class ResNet(nn.Module):
             self.sge_2 = SpatialGroupEnhance(256)
             self.sge_3 = SpatialGroupEnhance(512)
             self.sge_4 = SpatialGroupEnhance(1024)
-            self.sge_5 = SpatialGroupEnhance(2048)
         
         self.avgpool = nn.AvgPool2d(7)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -174,8 +173,6 @@ class ResNet(nn.Module):
         if self.update:
             feat4 = self.sge_4(feat4)
         feat5   = self.layer4(feat4)
-        if self.update:
-            feat5 = self.sge_5(feat5)
         return [feat1, feat2, feat3, feat4, feat5]
 
 def resnet50(pretrained=False, **kwargs):

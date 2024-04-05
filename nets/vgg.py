@@ -23,8 +23,6 @@ class VGG(nn.Module):
             self.sge_feat1 = SpatialGroupEnhance(64)
             self.sge_feat2 = SpatialGroupEnhance(128)
             self.sge_feat3 = SpatialGroupEnhance(256)
-            self.sge_feat4 = SpatialGroupEnhance(512)
-
 
     def forward(self, x):
         # x = self.features(x)
@@ -40,12 +38,12 @@ class VGG(nn.Module):
         feat3 = self.features[9:16](feat2)
         if self.update:
             feat3 = self.sge_feat3(feat3)
-        # feat4: 512
-        feat4 = self.features[16:23](feat3)
-        if self.update:
-            feat4 = self.sge_feat4(feat4)
-        feat5 = self.features[23:-1](feat4)
-        return [feat1, feat2, feat3, feat4, feat5]
+        if not self.update:
+            feat4 = self.features[16:23](feat3)
+            feat5 = self.features[23:-1](feat4)
+            return [feat1, feat2, feat3, feat4, feat5]
+        else:
+            return [feat1, feat2, feat3]
 
     def _initialize_weights(self):
         for m in self.modules():
