@@ -3,8 +3,7 @@ import torch.nn as nn
 
 from nets.resnet import resnet50
 from nets.vgg import VGG16
-from nets.mobilenet_v3 import mobilenet_v3
-
+from nets.module import SpatialGroupEnhance
 
 class unetUp(nn.Module):
     def __init__(self, in_size, out_size):
@@ -24,17 +23,15 @@ class unetUp(nn.Module):
 
 
 class Unet(nn.Module):
-    def __init__(self, num_classes=21, pretrained=False, backbone='vgg'):
+    def __init__(self, num_classes=21, pretrained=False, backbone='vgg', update=False):
         super(Unet, self).__init__()
+        self.update = update
         if backbone == 'vgg':
-            self.vgg = VGG16(pretrained=pretrained)
+            self.vgg = VGG16(pretrained=pretrained, update=update)
             in_filters = [192, 384, 768, 1024]
         elif backbone == "resnet50":
-            self.resnet = resnet50(pretrained=pretrained)
+            self.resnet = resnet50(pretrained=pretrained,update=update)
             in_filters = [192, 512, 1024, 3072]
-        elif backbone == "mobilenet":
-            self.mobilenet = mobilenet_v3(pretrained=pretrained)
-            in_filters = [144, 280, 552, 272]
         else:
             raise ValueError('Unsupported backbone - `{}`, Use vgg, resnet50.'.format(backbone))
         out_filters = [64, 128, 256, 512]
@@ -42,10 +39,13 @@ class Unet(nn.Module):
         # upsampling
         # 64,64,512
         self.up_concat4 = unetUp(in_filters[3], out_filters[3])
+
         # 128,128,256
         self.up_concat3 = unetUp(in_filters[2], out_filters[2])
+
         # 256,256,128
         self.up_concat2 = unetUp(in_filters[1], out_filters[1])
+
         # 512,512,64
         self.up_concat1 = unetUp(in_filters[0], out_filters[0])
 
@@ -65,15 +65,18 @@ class Unet(nn.Module):
         self.backbone = backbone
 
     def forward(self, inputs):
-        if self.backbone == "vgg":
+        if self.backbone == "vgg" and not self.update:
             [feat1, feat2, feat3, feat4, feat5] = self.vgg.forward(inputs)
+        elif self.backbone == "vgg" and self.update:
+            [feat1, feat2, feat3] = self.vgg.forward(inputs)
         elif self.backbone == "resnet50":
             [feat1, feat2, feat3, feat4, feat5] = self.resnet.forward(inputs)
-        elif self.backbone == "mobilenet":
-            [feat1, feat2, feat3, feat4, feat5] = self.mobilenet.forward(inputs)
-        up4 = self.up_concat4(feat4, feat5)
-        up3 = self.up_concat3(feat3, up4)
-        up2 = self.up_concat2(feat2, up3)
+        if not self.update:
+            up4 = self.up_concat4(feat4, feat5)
+            up3 = self.up_concat3(feat3, up4)
+            up2 = self.up_concat2(feat2, up3)
+        else:
+            up2 = self.up_concat2(feat2, feat3)
         up1 = self.up_concat1(feat1, up2)
 
         if self.up_conv != None:
@@ -90,9 +93,6 @@ class Unet(nn.Module):
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
                 param.requires_grad = False
-        elif self.backbone == "mobilenet":
-            for param in self.mobilenet.parameters():
-                param.requires_grad = False
 
     def unfreeze_backbone(self):
         if self.backbone == "vgg":
@@ -100,7 +100,4 @@ class Unet(nn.Module):
                 param.requires_grad = True
         elif self.backbone == "resnet50":
             for param in self.resnet.parameters():
-                param.requires_grad = True
-        elif self.backbone == "mobilenet":
-            for param in self.mobilenet.parameters():
                 param.requires_grad = True

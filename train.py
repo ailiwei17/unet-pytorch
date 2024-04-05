@@ -72,7 +72,10 @@ if __name__ == "__main__":
     #   vgg
     #   resnet50
     #-----------------------------------------------------#
-    backbone    = "resnet50"
+    backbone    = "vgg"
+    # -----------------------------------------------------#
+    #   是否增强
+    update = True
     #----------------------------------------------------------------------------------------------------------------------------#
     #   pretrained      是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #                   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -98,7 +101,7 @@ if __name__ == "__main__":
     #   一般来讲，网络从0开始的训练效果会很差，因为权值太过随机，特征提取效果不明显，因此非常、非常、非常不建议大家从0开始训练！
     #   如果一定要从0开始，可以了解imagenet数据集，首先训练分类模型，获得网络的主干部分权值，分类模型的 主干部分 和该模型通用，基于此进行训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path  = "model_data/resnet50-19c8e357.pth"
+    model_path  = ""
     # model_path  = ""
     #-----------------------------------------------------#
     #   input_shape     输入图片的大小，32的倍数
@@ -157,8 +160,8 @@ if __name__ == "__main__":
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     #------------------------------------------------------------------#
-    UnFreeze_Epoch      = 300
-    Unfreeze_batch_size = 4
+    UnFreeze_Epoch      = 250
+    Unfreeze_batch_size = 8
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -224,7 +227,7 @@ if __name__ == "__main__":
     #------------------------------------------------------------------#
     #   是否使用focal loss来防止正负样本不平衡
     #------------------------------------------------------------------#
-    focal_loss      = False
+    focal_loss      = True
     #------------------------------------------------------------------#
     #   是否给不同种类赋予不同的损失权值，默认是平衡的。
     #   设置的话，注意设置成numpy形式的，长度和num_classes一样。
@@ -267,8 +270,7 @@ if __name__ == "__main__":
             dist.barrier()
         else:
             download_weights(backbone)
-
-    model = Unet(num_classes=num_classes, pretrained=pretrained, backbone=backbone).train()
+    model = Unet(num_classes=num_classes, pretrained=pretrained, backbone=backbone, update=update).train()
     if not pretrained:
         weights_init(model)
     if model_path != '':

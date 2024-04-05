@@ -8,12 +8,13 @@ from torchsummary import summary
 from nets.unet import Unet
 
 if __name__ == "__main__":
-    input_shape     = [512, 512]
-    num_classes     = 21
-    backbone        = 'mobilenet'
+    input_shape     = [128, 128]
+    num_classes     = 4
+    backbone        = 'vgg'
+    update = True
     
     device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Unet(num_classes = num_classes, backbone = backbone).to(device)
+    model = Unet(num_classes = num_classes, backbone = backbone, update=update).to(device)
     summary(model, (3, input_shape[0], input_shape[1]))
     
     dummy_input     = torch.randn(1, 3, input_shape[0], input_shape[1]).to(device)

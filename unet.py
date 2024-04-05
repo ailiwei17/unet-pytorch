@@ -32,9 +32,12 @@ class Unet(object):
         #--------------------------------#
         "num_classes"   : 4,
         #--------------------------------#
-        #   所使用的的主干网络：vgg、resnet50   
+        #   所使用的的主干网络：vgg、resnet50
         #--------------------------------#
         "backbone"      : "vgg",
+        # --------------------------------#
+        #   是否添加改进
+        "update": True,
         #--------------------------------#
         #   输入图片的大小
         #--------------------------------#
@@ -84,10 +87,9 @@ class Unet(object):
     #   获得所有的分类
     #---------------------------------------------------#
     def generate(self, onnx=False):
-        self.net = unet(num_classes = self.num_classes, backbone=self.backbone)
-
+        self.net = unet(num_classes = self.num_classes, backbone=self.backbone,update=self.update)
         device      = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.net.load_state_dict(torch.load(self.model_path, map_location=device))
+        self.net.load_state_dict(torch.load(self.model_path, map_location=device), strict=False)
         self.net    = self.net.eval()
         print('{} model, and classes loaded.'.format(self.model_path))
         if not onnx:
