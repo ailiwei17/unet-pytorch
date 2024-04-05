@@ -29,8 +29,10 @@ class unet_v_up(nn.Module):
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
         self.up = nn.UpsamplingBilinear2d(scale_factor=2)
         self.relu = nn.ReLU(inplace=True)
+        self.sp_att = SpatialGroupEnhance(out_size)
 
     def forward(self, inputs1, inputs2):
+        inputs1 = self.sp_att(inputs1)
         outputs = torch.cat([inputs1, self.up(inputs2)], 1)
         outputs = self.conv1(outputs)
         outputs = self.relu(outputs)
@@ -71,8 +73,6 @@ class Unet(nn.Module):
             self.v_up_1 = unet_v_up(in_filters[0], out_filters[0])
             self.v_up_2 = unet_v_up(in_filters[1], out_filters[1])
             self.v_up_3 = unet_v_up(in_filters[2], out_filters[2])
-
-
 
         if backbone == 'resnet50':
             self.up_conv = nn.Sequential(

@@ -33,11 +33,9 @@ class SpatialGroupEnhance(nn.Module):
         self.weight = nn.Parameter(torch.zeros(1, groups, 1, 1))
         self.bias = nn.Parameter(torch.ones(1, groups, 1, 1))
         self.sig = nn.Sigmoid()
-        self.spatial_attention = SpatialAttention(channel)
 
     def forward(self, x):  # (b, c, h, w)
         b, c, h, w = x.size()
-        sp_x = self.spatial_attention(x)
         # 将通道分组 （b*g , c/g, h, w）
         x = x.view(b * self.groups, -1, h, w)
         # 将分组后的特征图进行平均池化后进行点积
@@ -54,5 +52,4 @@ class SpatialGroupEnhance(nn.Module):
         t = t.view(b * self.groups, 1, h, w)
         x = x * self.sig(t)
         x = x.view(b, c, h, w)
-        x = x + sp_x
         return x
