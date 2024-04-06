@@ -55,7 +55,6 @@ class Unet(nn.Module):
         else:
             raise ValueError('Unsupported backbone - `{}`, Use vgg, resnet50.'.format(backbone))
         out_filters = [64, 128, 256, 512]
-
         # upsampling
         # 64,64,512
         self.up_concat4 = unetUp(in_filters[3], out_filters[3])
@@ -70,9 +69,14 @@ class Unet(nn.Module):
         self.up_concat1 = unetUp(in_filters[0], out_filters[0])
 
         if self.update:
-            self.v_up_1 = unet_v_up(in_filters[0], out_filters[0])
-            self.v_up_2 = unet_v_up(in_filters[1], out_filters[1])
-            self.v_up_3 = unet_v_up(in_filters[2], out_filters[2])
+            if backbone == 'vgg':
+                self.v_up_1 = unet_v_up(in_filters[0], out_filters[0])
+                self.v_up_2 = unet_v_up(in_filters[1], out_filters[1])
+                self.v_up_3 = unet_v_up(in_filters[2], out_filters[2])
+            if backbone == 'resnet50':
+                self.v_up_1 = unet_v_up(320, 64)
+                self.v_up_2 = unet_v_up(768, 256)
+                self.v_up_3 = unet_v_up(1536, 512)
 
         if backbone == 'resnet50':
             self.up_conv = nn.Sequential(
@@ -99,15 +103,13 @@ class Unet(nn.Module):
             # print(f"feat2:{feat2.shape}")
             # print(f"feat3:{feat3.shape}")
             # print(f"feat4:{feat4.shape}")
-
             new_feat1 = self.v_up_1(feat1, feat2)
             new_feat2 = self.v_up_2(feat2, feat3)
             new_feat3 = self.v_up_3(feat3, feat4)
 
-            # print(f"new_feat1:{feat1.shape}")
-            # print(f"new_feat2:{feat2.shape}")
-            # print(f"new_feat3:{feat3.shape}")
-            # print(f"new_feat4:{feat4.shape}")
+            # print(f"new_feat1:{new_feat1.shape}")
+            # print(f"new_feat2:{new_feat2.shape}")
+            # print(f"new_feat3:{new_feat3.shape}")
 
             feat1 = feat1 + new_feat1
             feat2 = feat2 + new_feat2
